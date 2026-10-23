@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dijkstra's Algorithm Visualizer</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Top App Navigation / Toolbar -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="app-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="6" cy="6" r="3"/>
+          <circle cx="18" cy="6" r="3"/>
+          <circle cx="18" cy="18" r="3"/>
+          <circle cx="6" cy="18" r="3"/>
+          <path d="M9 6h6M6 9v6M18 9v6M9 18h6M8.5 8.5l7 7M8.5 15.5l7-7"/>
+        </svg>
+      </div>
+      <div class="brand">
+        <span class="app-title">Dijkstra's Algorithm</span>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <div class="speed-control">
+        <span class="ctrl-label">Speed:</span>
+        <input type="range" id="speedSlider" min="100" max="1000" step="50" value="500">
+        <span id="speedVal" class="speed-text">500ms</span>
+      </div>
+
+      <button id="themeToggleBtn" class="btn btn-secondary icon-btn" title="Toggle Light / Dark Neutral Theme">
+        <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+
+      <button id="generateGraphBtn" class="btn btn-secondary" title="Regenerate random connected 10 vertices & 20 weighted edges">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span>Randomize Graph</span>
+      </button>
+
+      <button id="resetBtn" class="btn btn-secondary" title="Reset execution state">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+        <span>Reset</span>
+      </button>
+
+      <button id="stepBtn" class="btn btn-secondary" title="Step forward one algorithm instruction">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 4 15 12 5 20 5 4"/>
+          <line x1="19" y1="5" x2="19" y2="19"/>
+        </svg>
+        <span>Step</span>
+      </button>
+
+      <button id="skipEndBtn" class="btn btn-secondary" title="Skip animation and immediately compute shortest paths">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 4 15 12 5 20 5 4"/>
+          <polygon points="13 4 23 12 13 20 13 4"/>
+        </svg>
+        <span>Instant Complete</span>
+      </button>
+
+      <button id="startBtn" class="btn btn-primary" title="Find shortest paths from vertex A to everywhere else">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        <span>Find Shortest Paths</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Status Bar Subheader -->
+  <div class="status-ribbon">
+    <div class="status-left">
+      <span class="status-indicator" id="statusDot"></span>
+      <span class="status-msg" id="statusMessage">Ready. Press "Find Shortest Paths" or "Step" to run Dijkstra's Algorithm from vertex A.</span>
+    </div>
+    <div class="status-metrics">
+      <span class="metric">Vertices: <strong id="vertexCount">10</strong></span>
+      <span class="metric-divider">|</span>
+      <span class="metric">Edges: <strong id="edgeCount">20</strong></span>
+      <span class="metric-divider">|</span>
+      <span class="metric">Visited: <strong id="visitedCounter">0 / 10</strong></span>
+      <span class="metric-divider">|</span>
+      <span class="metric">Step: <strong id="stepCounter">0</strong></span>
+    </div>
+  </div>
+
+  <!-- Main Three Horizontally Arranged Bars Container (Equal Width) -->
+  <main class="workbench-layout">
+    
+    <!-- LEFT BAR: Algorithm Pseudocode & Line Execution Tracker -->
+    <section class="panel panel-left" id="panelLeft">
+      <div class="panel-header">
+        <div class="panel-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16 18 22 12 16 6"/>
+            <polyline points="8 6 2 12 8 18"/>
+          </svg>
+          <span>Algorithm Execution</span>
+        </div>
+        <div class="panel-badge">Pseudocode</div>
+      </div>
+      <div class="panel-content code-viewer" id="codeViewer">
+        <div class="code-line" data-line="1"><span class="line-num">01</span><span class="line-text"><span class="kw">function</span> <span class="fn">Dijkstra</span>(Graph, source=<span class="val">'A'</span>):</span></div>
+        <div class="code-line" data-line="2"><span class="line-num">02</span><span class="line-text">  <span class="kw">for each</span> vertex v <span class="kw">in</span> Graph.Vertices:</span></div>
+        <div class="code-line" data-line="3"><span class="line-num">03</span><span class="line-text">    dist[v] &larr; &infin;,  prev[v] &larr; <span class="kw">null</span></span></div>
+        <div class="code-line" data-line="4"><span class="line-num">04</span><span class="line-text">  dist[source] &larr; <span class="val">0</span></span></div>
+        <div class="code-line" data-line="5"><span class="line-num">05</span><span class="line-text">  Q &larr; copy of all vertices in Graph</span></div>
+        <div class="code-line" data-line="6"><span class="line-num">06</span><span class="line-text">  <span class="kw">while</span> Q is not empty:</span></div>
+        <div class="code-line" data-line="7"><span class="line-num">07</span><span class="line-text">    u &larr; vertex in Q with min dist[u]</span></div>
+        <div class="code-line" data-line="8"><span class="line-num">08</span><span class="line-text">    remove u from Q</span></div>
+        <div class="code-line" data-line="9"><span class="line-num">09</span><span class="line-text">    <span class="kw">for each</span> unvisited neighbor v of u:</span></div>
+        <div class="code-line" data-line="10"><span class="line-num">10</span><span class="line-text">      alt &larr; dist[u] + weight(u, v)</span></div>
+        <div class="code-line" data-line="11"><span class="line-num">11</span><span class="line-text">      <span class="kw">if</span> alt &lt; dist[v]:</span></div>
+        <div class="code-line" data-line="12"><span class="line-num">12</span><span class="line-text">        dist[v] &larr; alt,  prev[v] &larr; u</span></div>
+        <div class="code-line" data-line="13"><span class="line-num">13</span><span class="line-text">  <span class="kw">return</span> dist, prev</span></div>
+      </div>
+    </section>
+
+    <!-- Resizer Divider 1 -->
+    <div class="resizer" id="resizer1"></div>
+
+    <!-- MIDDLE BAR: Interactive Graph Canvas -->
+    <section class="panel panel-middle" id="panelMiddle">
+      <div class="panel-header">
+        <div class="panel-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="6" cy="6" r="3"/>
+            <circle cx="18" cy="6" r="3"/>
+            <circle cx="12" cy="18" r="3"/>
+            <line x1="8.5" y1="7.5" x2="10.5" y2="16"/>
+            <line x1="15.5" y1="7.5" x2="13.5" y2="16"/>
+            <line x1="9" y1="6" x2="15" y2="6"/>
+          </svg>
+          <span>Graph Topology &amp; Shortest Path Tree</span>
+        </div>
+        <div class="graph-legend">
+          <span class="legend-item"><span class="legend-color node-source"></span>Source</span>
+          <span class="legend-item"><span class="legend-color node-current"></span>Current (u)</span>
+          <span class="legend-item"><span class="legend-color node-evaluating"></span>Evaluating (v)</span>
+          <span class="legend-item"><span class="legend-color node-visited"></span>Settled</span>
+          <span class="legend-item"><span class="legend-color edge-spt"></span>SPT Edge</span>
+        </div>
+      </div>
+      <div class="drawing-toolbar" role="toolbar" aria-label="Graph drawing tools">
+        <button type="button" class="btn btn-secondary tool-btn" data-tool="move" aria-pressed="true" title="Drag vertices and inspect shortest paths">Move</button>
+        <button type="button" class="btn btn-secondary tool-btn" data-tool="vertex" aria-pressed="false" title="Click or paint across empty space to add vertices">Vertex paint</button>
+        <button type="button" class="btn btn-secondary tool-btn" data-tool="connect" aria-pressed="false" title="Click two vertices to connect them">Connect edges</button>
+        <button type="button" class="btn btn-secondary tool-btn" data-tool="erase" aria-pressed="false" title="Click or drag over vertices and edges to delete them">Eraser</button>
+        <label class="source-control" for="sourceSelect">Source <select id="sourceSelect" aria-label="Source vertex"></select></label>
+      </div>
+      <p class="tool-hint" id="toolHint" role="status">Drag vertices to move them. Click an edge weight to edit its distance.</p>
+      <div class="graph-tools">
+        <span>Grid: 1 unit per square · weights = distance</span>
+        <output id="coordinateReadout">Drag a vertex to see coordinates</output>
+      </div>
+      <form id="edgeEditor" class="edge-editor" hidden>
+        <label for="edgeWeightInput" id="edgeEditorLabel">Edge distance</label>
+        <div class="edge-editor-controls">
+          <input id="edgeWeightInput" type="number" min="0.01" step="0.01" required aria-describedby="edgeEditorHint edgeEditorError">
+          <button class="btn btn-primary" type="submit">Apply</button>
+          <button class="btn btn-secondary" type="button" id="cancelEdgeEdit">Cancel</button>
+        </div>
+        <span id="edgeEditorHint">Moves the two endpoints as little as possible. Connected weights and shortest paths update.</span>
+        <span id="edgeEditorError" role="alert"></span>
+      </form>
+      <div class="canvas-container" id="canvasContainer">
+        <svg id="graphSvg" class="graph-svg" aria-label="Editable weighted graph"></svg>
+        <div id="emptyGraphHint" class="empty-graph-hint" hidden>Select Vertex paint and click the grid to begin.</div>
+        <div class="canvas-hint">Drag vertices to update distances &bull; Click a weight to edit it &bull; Click a vertex to show its path</div>
+
+        <!-- Path Transition Loading Screen -->
+        <div class="path-transition-overlay" id="pathTransitionOverlay" style="display: none;">
+          <div class="path-transition-spinner"></div>
+          <div class="path-transition-text">Showing the selected paths...</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Resizer Divider 2 -->
+    <div class="resizer" id="resizer2"></div>
+
+    <!-- RIGHT BAR: Real-time Variable State & Tables -->
+    <section class="panel panel-right" id="panelRight">
+      <div class="panel-header">
+        <div class="panel-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M3 9h18M9 21V9"/>
+          </svg>
+          <span>Execution State &amp; Variables</span>
+        </div>
+        <div class="panel-badge">Live Memory</div>
+      </div>
+
+      <div class="panel-content variables-content">
+        <!-- Key Registers / Variables -->
+        <div class="section-card">
+          <div class="card-title">Scalar Registers</div>
+          <div class="registers-grid">
+            <div class="reg-box">
+              <span class="reg-label">Current Node (u)</span>
+              <span class="reg-val" id="regU">&mdash;</span>
+            </div>
+            <div class="reg-box">
+              <span class="reg-label">Neighbor (v)</span>
+              <span class="reg-val" id="regV">&mdash;</span>
+            </div>
+            <div class="reg-box">
+              <span class="reg-label">Edge Weight w(u,v)</span>
+              <span class="reg-val" id="regW">&mdash;</span>
+            </div>
+            <div class="reg-box">
+              <span class="reg-label">Alt Path (dist[u] + w)</span>
+              <span class="reg-val" id="regAlt">&mdash;</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Priority Queue / Unsettled Set Q -->
+        <div class="section-card">
+          <div class="card-title-row">
+            <span class="card-title">Active Priority Queue (Q)</span>
+            <span class="card-subtitle" id="queueCount">10 items remaining</span>
+          </div>
+          <div class="queue-chips" id="queueChips">
+            <!-- Dynamic chips -->
+          </div>
+        </div>
+
+        <!-- Distance and Predecessor Table (Expands to bottom) -->
+        <div class="section-card table-card">
+          <div class="card-title-row">
+            <span class="card-title">Distance &amp; Predecessor Table</span>
+            <span class="table-legend-hint">*highlighted row = active</span>
+          </div>
+          <div class="table-wrapper">
+            <table class="var-table" id="varTable">
+              <thead>
+                <tr>
+                  <th>Vertex</th>
+                  <th>dist[v]</th>
+                  <th>prev[v]</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="varTableBody">
+                <!-- Dynamically populated rows for A to J -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script src="graph.js"></script>
+  <script src="dijkstra.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
